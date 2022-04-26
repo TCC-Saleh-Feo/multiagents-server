@@ -4,7 +4,6 @@ import com.tccsafeo.entities.Lobby;
 import com.tccsafeo.entities.Player;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -23,18 +22,8 @@ public class HelloWorldAgent extends Agent {
         _playersToPlay = new LinkedList<>();
 
         registerAgentInYellowPages();
-//        addBehaviour(new CheckPlayersInTheQueueBehaviour());
-        addBehaviour(new TickerBehaviour(this, 60000) {
-            @Override
-            protected void onTick() {
-                List<Player> playersToPlay = _manageService.getPlayersReadyToPlay();
-                for (Player playerToPlay : playersToPlay) {
-                    _playersToPlay.add(playerToPlay);
-                    System.out.println("Player: " + playerToPlay.getName() + "inserted to queue.");
-                }
-            }
-        });
-        addBehaviour(new BuildLobbyWithPlayers(this, 20000));
+        addBehaviour(new CheckPlayersInTheQueueBehaviour(this, 60000));
+        addBehaviour(new BuildLobbyWithPlayers());
     }
 
     private void registerAgentInYellowPages() {
@@ -52,30 +41,31 @@ public class HelloWorldAgent extends Agent {
         }
     }
 
-//    private class CheckPlayersInTheQueueBehaviour extends OneShotBehaviour {
-//        @Override
-//        public void action() {
-//            List<Player> playersToPlay = _manageService.getPlayersReadyToPlay();
-//            for (Player playerToPlay : playersToPlay) {
-//                _playersToPlay.add(playerToPlay);
-//                System.out.println("Player: " + playerToPlay.getName() + "inserted to queue.");
-//            }
-//        }
-//    }
+    private class CheckPlayersInTheQueueBehaviour extends TickerBehaviour {
 
-    private class BuildLobbyWithPlayers extends TickerBehaviour {
-
-        public BuildLobbyWithPlayers(Agent a, long period) {
+        public CheckPlayersInTheQueueBehaviour(Agent a, long period) {
             super(a, period);
         }
 
         @Override
         protected void onTick() {
+            List<Player> playersToPlay = _manageService.getPlayersReadyToPlay();
+            for (Player playerToPlay : playersToPlay) {
+                _playersToPlay.add(playerToPlay);
+                System.out.println("Player: " + playerToPlay.getName() + "inserted to queue.");
+            }
+        }
+    }
+
+    private class BuildLobbyWithPlayers extends CyclicBehaviour {
+
+        @Override
+        public void action() {
             if (!_playersToPlay.isEmpty()) {
                 Lobby lobby = _buildLobby();
-                System.out.println("Builded Lobby " + lobby.getPlayer1().getName() + " VS " + lobby.getPlayer2().getName());
-            } else {
-                System.out.println("Not exists players in the queue");
+                if (lobby != null) {
+                    System.out.println("Builded Lobby " + lobby.getPlayer1().getName() + " VS " + lobby.getPlayer2().getName());
+                }
             }
         }
 
@@ -84,6 +74,10 @@ public class HelloWorldAgent extends Agent {
             Player player1 = _playersToPlay.remove();
             lobby.setPlayer1(player1);
             Player player2 = _calculateSecondPlayer(player1);
+            if (player2 == null) {
+                _playersToPlay.add(player1);
+                return null;
+            }
             lobby.setPlayer2(player2);
             return lobby;
         }
