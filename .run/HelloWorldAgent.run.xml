@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="HelloWorldAgent" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="jade.Boot" />
+    <module name="untitled104" />
+    <option name="PROGRAM_PARAMETERS" value="-gui -name the-plataform -agents Saleh:com.tccsafeo.HelloWorldAgent" />
+    <RunnerSettings RunnerId="Run" />
+    <ConfigurationWrapper RunnerId="Run" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
