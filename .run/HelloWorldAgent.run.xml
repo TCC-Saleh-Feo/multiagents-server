@@ -2,7 +2,7 @@
   <configuration default="false" name="HelloWorldAgent" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="jade.Boot" />
     <module name="untitled104" />
-    <option name="PROGRAM_PARAMETERS" value="-gui -name the-plataform -agents Saleh:com.tccsafeo.HelloWorldAgent" />
+    <option name="PROGRAM_PARAMETERS" value="-gui -name the-plataform -agents &quot;Saleh:com.tccsafeo.HelloWorldAgent;Pedro:com.tccsafeo.OrganizerAgent&quot;" />
     <RunnerSettings RunnerId="Run" />
     <ConfigurationWrapper RunnerId="Run" />
     <method v="2">

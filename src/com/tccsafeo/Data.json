@@ -1,0 +1,26 @@
+{
+  "body": [
+    {
+      "name": "Elma Maria",
+      "kills": 10,
+      "victory": 1
+    },
+    {
+      "name": "Paulo Brificado",
+      "kills": 100,
+      "victory": 10
+    },        {
+      "name": "Saleh Nazih",
+      "kills": 2,
+      "victory": 0
+    },        {
+      "name": "Pedro Féo",
+      "kills": 132,
+      "victory": 17
+    },        {
+      "name": "Homelander",
+      "kills": 138392323,
+      "victory": 13833
+    }
+  ]
+}
