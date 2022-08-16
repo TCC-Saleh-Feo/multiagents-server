@@ -1,26 +1,25 @@
-package com.company;
+package com.tccsafeo.entities;
+
+import java.util.ArrayList;
 
 public class Player {
-    public String name;
-    public Integer kills;
-    public Integer victory;
+    public String playerId;
+    public ArrayList<PlayerData> playerData;
 
     public Player() {
         super();
     }
 
-    public Player(String name, Integer kills, Integer victory) {
-        this.name = name;
-        this.kills = kills;
-        this.victory = victory;
+    public Player(String playerId, ArrayList<PlayerData> playerData) {
+        this.playerId = playerId;
+        this.playerData = playerData;
     }
 
     @Override
     public String toString() {
-        return "Player{" +
-                "name='" + name + '\'' +
-                ", kills=" + kills +
-                ", victory=" + victory +
-                '}';
+        return "Player {" +
+                "playerId = " + playerId +
+                ", playerData = " + playerData +
+                "}";
     }
 }

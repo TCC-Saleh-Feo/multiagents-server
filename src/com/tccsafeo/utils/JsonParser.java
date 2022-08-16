@@ -1,4 +1,4 @@
-package com.company;
+package com.tccsafeo.utils;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,4 +1,4 @@
-package com.company;
+package com.tccsafeo.utils;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

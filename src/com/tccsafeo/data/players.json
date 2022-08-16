@@ -1,27 +1,29 @@
 [
   {
-    "name": "Elma Maria",
-    "kills": 10,
-    "victory": 1
+    "playerId": "1",
+    "playerData": [
+      {
+        "key": "level",
+        "value": 10
+      }
+    ]
   },
   {
-    "name": "Paulo Brificado",
-    "kills": 100,
-    "victory": 10
+    "playerId": "2",
+    "playerData": [
+      {
+        "key": "level",
+        "value": 11
+      }
+    ]
   },
   {
-    "name": "Saleh Nazih",
-    "kills": 2,
-    "victory": 0
-  },
-  {
-    "name": "Pedro Féo",
-    "kills": 132,
-    "victory": 17
-  },
-  {
-    "name": "Homelander",
-    "kills": 138392323,
-    "victory": 13833
+    "playerId": "3",
+    "playerData": [
+      {
+        "key": "level",
+        "value": 12
+      }
+    ]
   }
 ]
