@@ -2,6 +2,7 @@ package com.tccsafeo.agents;
 
 import com.tccsafeo.entities.QueueConfig;
 import com.tccsafeo.utils.Configuration;
+import com.tccsafeo.utils.YellowPage;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
@@ -14,6 +15,7 @@ public class LobbyOrganizerAgent extends Agent {
 
     protected void setup() {
         addBehaviour(new SetupConfigsBehaviour());
+        addBehaviour(new TurnAvailableBehaviour());
     }
 
     protected void setQueueConfig(QueueConfig queueConfig) {
@@ -34,14 +36,16 @@ public class LobbyOrganizerAgent extends Agent {
         }
     }
 
-    // TODO: Behaviour to add LobbyOrganizerAgent into yellow page
+    // Behaviour to add LobbyOrganizerAgent into yellow page
     private class TurnAvailableBehaviour extends OneShotBehaviour {
         @Override
-        public void action() {}
+        public void action() {
+            YellowPage.addAgent(myAgent, "lobby-organizer");
+        }
     }
 
     // TODO: Behaviour to listen for player offers from AdderAgent
-    private class ListerAdderAgentBehaviour extends CyclicBehaviour {
+    private class ListenAdderAgentBehaviour extends CyclicBehaviour {
         @Override
         public void action() {}
     }

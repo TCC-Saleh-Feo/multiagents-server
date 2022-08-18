@@ -3,6 +3,7 @@ package com.tccsafeo.agents;
 import com.tccsafeo.entities.Player;
 import com.tccsafeo.utils.FileUtil;
 import com.tccsafeo.utils.JsonParser;
+import com.tccsafeo.utils.YellowPage;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
@@ -17,7 +18,7 @@ public class AdderAgent extends Agent {
     ArrayList<Player> playerList = new ArrayList<>();
     ArrayList<Player> addedPlayers = new ArrayList<>();
 
-    private ArrayList<AID> lobbyOrganizerAgents;
+    private ArrayList<AID> lobbyOrganizerAgents = new ArrayList<>();
 
     protected void setup() {
         addBehaviour(new SetupPlayersBehaviour());
@@ -38,11 +39,11 @@ public class AdderAgent extends Agent {
                 }
             }
         });
-        // TODO: Behaviour to update available LobbyOrganizerAgents
+        // Behaviour to update available LobbyOrganizerAgents
         addBehaviour(new TickerBehaviour(this, 5000) {
             @Override
             protected void onTick() {
-
+                lobbyOrganizerAgents = YellowPage.getAgents(myAgent, "lobby-organizer");
             }
         });
     }
