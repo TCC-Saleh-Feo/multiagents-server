@@ -10,13 +10,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class Messenger {
-    private static MessageTemplate sendMessage(
+    public static MessageTemplate sendMessage(
             Agent senderAgent,
             ArrayList<AID> receivers,
             String conversationId,
-            String messageContent
+            String messageContent,
+            Integer messageType
     ) {
-        ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
+        ACLMessage cfp = new ACLMessage(messageType);
         for(AID receiver: receivers) {
             cfp.addReceiver(receiver);
         }
@@ -35,7 +36,8 @@ public class Messenger {
                 senderAgent,
                 receivers,
                 "offering-player-" + player.playerId,
-                JsonParser.toJson(player)
+                JsonParser.toJson(player),
+                ACLMessage.CFP
         );
     }
 }

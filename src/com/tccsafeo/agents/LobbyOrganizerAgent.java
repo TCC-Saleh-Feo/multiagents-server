@@ -54,7 +54,7 @@ public class LobbyOrganizerAgent extends Agent {
     private class ListenAdderAgentBehaviour extends CyclicBehaviour {
         @Override
         public void action() {
-            MessageTemplate mt = MessageTemplate.MatchPerformative((ACLMessage.CFP));
+            MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.CFP);
             ACLMessage message = myAgent.receive(mt);
             if (message != null) {
                 try {
@@ -81,7 +81,16 @@ public class LobbyOrganizerAgent extends Agent {
     private class ListenAcceptedProposalsBehaviour extends CyclicBehaviour {
         @Override
         public void action() {
+            MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
+            ACLMessage message = myAgent.receive(mt);
+            if (message != null) {
+                ACLMessage reply = message.createReply();
+                reply.setPerformative(ACLMessage.INFORM);
 
+                myAgent.send(reply);
+            } else {
+                block();
+            }
         }
     }
 }
