@@ -20,7 +20,6 @@ public class AdderAgent extends Agent {
 
     ArrayList<Player> playerList = new ArrayList<>();
     ArrayList<Player> addedPlayers = new ArrayList<>();
-    Player currentPlayer;
 
     private ArrayList<AID> lobbyOrganizerAgents = new ArrayList<>();
 
@@ -32,11 +31,8 @@ public class AdderAgent extends Agent {
             protected void onTick() {
                 if (addedPlayers.size() < playerList.size()) {
                     Integer currentPlayerPosition = addedPlayers.size();
-                    currentPlayer = playerList.get(currentPlayerPosition);
 
-                    addedPlayers.add(currentPlayer);
-                    System.out.println("Current Player: " + currentPlayer + "\nAdded players: " + addedPlayers.size());
-                    addBehaviour(new OfferPlayerBehaviour());
+                    addBehaviour(new OfferPlayerBehaviour(playerList.get(currentPlayerPosition)));
                 } else {
                     System.out.println("All Players Added!");
                     this.stop();
@@ -69,14 +65,18 @@ public class AdderAgent extends Agent {
         }
     }
 
-    // TODO: Behaviour to offer Player to all available LobbyOrganizerAgents
+    // Behaviour to offer Player to all available LobbyOrganizerAgents
     private class OfferPlayerBehaviour extends Behaviour {
         private Integer actionStep = 0;
         private MessageTemplate mt;
         private Integer repliesCount = 0;
         private AID bestLobby;
         private Integer bestScore;
-        private Player player = currentPlayer;
+        private Player player;
+
+        public OfferPlayerBehaviour(Player currentPlayer) {
+            this.player = currentPlayer;
+        }
 
         @Override
         public void action() {
@@ -112,16 +112,20 @@ public class AdderAgent extends Agent {
                     break;
                 case 2:
                     if (bestLobby != null) {
-                        ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
-                        order.addReceiver(bestLobby);
-                        order.setConversationId("offering-player-" + player.playerId);
-                        order.setReplyWith("order" + System.currentTimeMillis());
-                        myAgent.send(order);
-
-                        mt = MessageTemplate.and(
-                                MessageTemplate.MatchConversationId("offering-player-" + player.playerId),
-                                MessageTemplate.MatchInReplyTo(order.getReplyWith())
-                            );
+                        try {
+                            ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+                            order.addReceiver(bestLobby);
+                            order.setConversationId("offering-player-" + player.playerId);
+                            order.setReplyWith("order" + System.currentTimeMillis());
+                            order.setContent(JsonParser.toJson(player));
+                            myAgent.send(order);
+                            mt = MessageTemplate.and(
+                                    MessageTemplate.MatchConversationId("offering-player-" + player.playerId),
+                                    MessageTemplate.MatchInReplyTo(order.getReplyWith())
+                                );
+                        } catch (Exception e) {
+                            System.out.println("Could not parse player to json!");
+                        }
                         actionStep++;
                     } else {
                         actionStep = 4;
@@ -130,8 +134,11 @@ public class AdderAgent extends Agent {
                     reply = myAgent.receive(mt);
                     if (reply != null) {
                         if (reply.getPerformative() == ACLMessage.INFORM) {
-                            // TODO: what to do when player is inserted into lobby
+                            addedPlayers.add(player);
                         }
+                        actionStep++;
+                    } else {
+                        block();
                     }
             }
         }

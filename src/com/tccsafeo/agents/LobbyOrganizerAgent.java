@@ -8,25 +8,31 @@ import com.tccsafeo.utils.YellowPage;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Random;
 
 public class LobbyOrganizerAgent extends Agent {
 
     QueueConfig queueConfig;
+    ArrayList<ArrayList<Player>> lobby = new ArrayList<>();
+    Integer completedTeams = 0;
 
     protected void setup() {
         addBehaviour(new SetupConfigsBehaviour());
         addBehaviour(new TurnAvailableBehaviour());
         addBehaviour(new ListenAdderAgentBehaviour());
-    }
-
-    protected void setQueueConfig(QueueConfig queueConfig) {
-        this.queueConfig = queueConfig;
-        System.out.println(this.queueConfig);
+        addBehaviour(new ListenAcceptedProposalsBehaviour());
+        addBehaviour(new TickerBehaviour(this, 3000) {
+            @Override
+            protected void onTick() {
+                System.out.println(getName() + ":" + lobby);
+            }
+        });
     }
 
     // Behaviour to get lobby configurations from json
@@ -35,7 +41,11 @@ public class LobbyOrganizerAgent extends Agent {
         public void action() {
             try {
                 Configuration config = Configuration.getInstance();
-                setQueueConfig(config.getQueueConfig());
+                queueConfig = config.getQueueConfig();
+
+                for (Integer i = 0; i < queueConfig.teamAmount; i++) {
+                    lobby.add(new ArrayList<>());
+                }
             } catch (IOException exception) {
                 System.out.println("Could not load configurations!");
             }
@@ -77,17 +87,35 @@ public class LobbyOrganizerAgent extends Agent {
         }
     }
 
-    // TODO: Behaviour to listen for accepted player proposals
+    // Behaviour to listen for accepted player proposals
     private class ListenAcceptedProposalsBehaviour extends CyclicBehaviour {
         @Override
         public void action() {
             MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
             ACLMessage message = myAgent.receive(mt);
             if (message != null) {
-                ACLMessage reply = message.createReply();
-                reply.setPerformative(ACLMessage.INFORM);
+                try {
+                    Player playerToAdd = JsonParser.entity(message.getContent(), Player.class);
 
-                myAgent.send(reply);
+                    if (completedTeams < queueConfig.teamAmount) {
+                        lobby.get(completedTeams).add(playerToAdd);
+                        if (lobby.get(completedTeams).size() >= queueConfig.teamSize) {
+                            completedTeams++;
+                        }
+
+                        ACLMessage reply = message.createReply();
+                        reply.setPerformative(ACLMessage.INFORM);
+                        reply.setContent("OK");
+
+                        myAgent.send(reply);
+
+                        if (completedTeams >= queueConfig.teamAmount) {
+                            System.out.println("Lobby is completed!!");
+                        }
+                    }
+                } catch (IOException e) {
+                    System.out.println("Could not parse json to Player!");
+                }
             } else {
                 block();
             }
