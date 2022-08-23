@@ -3,7 +3,7 @@ package com.tccsafeo.entities;
 import java.util.ArrayList;
 
 public class QueueConfig {
-    public ArrayList<String> playerData;
+    public ArrayList<Criteria> criteria;
     public Integer teamSize;
     public Integer teamAmount;
 
@@ -11,8 +11,8 @@ public class QueueConfig {
         super();
     }
 
-    public QueueConfig(ArrayList<String> playerData, Integer teamSize, Integer teamAmount) {
-        this.playerData = playerData;
+    public QueueConfig(ArrayList<Criteria> criteria, Integer teamSize, Integer teamAmount) {
+        this.criteria = criteria;
         this.teamSize = teamSize;
         this.teamAmount = teamAmount;
     }
@@ -20,7 +20,7 @@ public class QueueConfig {
     @Override
     public String toString() {
         return "QueueConfig {" +
-                "playerData=" + playerData +
+                "criteria=" + criteria +
                 ", teamSize=" + teamSize +
                 ", teamAmount=" + teamAmount +
                 '}';

@@ -122,3 +122,11 @@ public class LobbyOrganizerAgent extends Agent {
         }
     }
 }
+
+// TODO: Decide what should be done when lobby is completed
+// TODO: Define how the Criteria should be used to determine player score
+// TODO: Decide if there should be a waiting room for players with low score in all lobbies
+// TODO: Define priority based on player queue time
+// TODO: Verify if team is considered balanced before closing lobby
+// TODO: Define what should be done if team is considered as not balanced
+// TODO: Define if a communication between LobbyOrganizers should be added

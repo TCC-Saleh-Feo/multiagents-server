@@ -1,5 +1,11 @@
 {
-  "playerData": ["level"],
+  "criteria": [
+    {
+      "name": "level",
+      "min": 1,
+      "max": 30
+    }
+  ],
   "teamSize": 3,
   "teamAmount": 2
 }
