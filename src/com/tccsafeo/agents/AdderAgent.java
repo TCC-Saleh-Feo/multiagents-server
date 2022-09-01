@@ -49,16 +49,12 @@ public class AdderAgent extends Agent {
         });
     }
 
-    protected void setPlayerList(ArrayList<Player> playerList) {
-        this.playerList = playerList;
-    }
-
     private class SetupPlayersBehaviour extends OneShotBehaviour {
         @Override
         public void action() {
             try {
                 String playerContent = FileUtil.readFileAsString("src/com/tccsafeo/data/players.json");
-                setPlayerList(JsonParser.arrayList(playerContent, Player.class));
+                playerList = JsonParser.arrayList(playerContent, Player.class);
             } catch (IOException exception) {
                 System.out.println("Could not read players file.");
             }

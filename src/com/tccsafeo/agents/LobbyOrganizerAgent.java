@@ -1,7 +1,9 @@
 package com.tccsafeo.agents;
 
+import com.tccsafeo.entities.Criteria;
 import com.tccsafeo.entities.Player;
 import com.tccsafeo.entities.QueueConfig;
+import com.tccsafeo.utils.Calculator;
 import com.tccsafeo.utils.Configuration;
 import com.tccsafeo.utils.JsonParser;
 import com.tccsafeo.utils.YellowPage;
@@ -35,6 +37,15 @@ public class LobbyOrganizerAgent extends Agent {
         });
     }
 
+    void resetLobby() {
+        lobby = new ArrayList<>();
+        completedTeams = 0;
+
+        for (Integer i = 0; i < queueConfig.teamAmount; i++) {
+            lobby.add(new ArrayList<>());
+        }
+    }
+
     // Behaviour to get lobby configurations from json
     private class SetupConfigsBehaviour extends OneShotBehaviour {
         @Override
@@ -43,9 +54,7 @@ public class LobbyOrganizerAgent extends Agent {
                 Configuration config = Configuration.getInstance();
                 queueConfig = config.getQueueConfig();
 
-                for (Integer i = 0; i < queueConfig.teamAmount; i++) {
-                    lobby.add(new ArrayList<>());
-                }
+                resetLobby();
             } catch (IOException exception) {
                 System.out.println("Could not load configurations!");
             }
@@ -69,6 +78,17 @@ public class LobbyOrganizerAgent extends Agent {
             if (message != null) {
                 try {
                     Player offeredPlayer = JsonParser.entity(message.getContent(), Player.class);
+
+                    for (Criteria criteria : queueConfig.criteria) {
+                        Integer criteriaIndexOnPlayer = offeredPlayer.findPlayerDataIndex(criteria.name);
+                        if (criteriaIndexOnPlayer >= 0) {
+                            Double normalizedValue = Calculator.normalize(offeredPlayer.playerData.get(criteriaIndexOnPlayer).value, criteria.min, criteria.max);
+                            System.out.println("Normalized " + criteria.name + ": " + normalizedValue);
+                        } else {
+                            throw new RuntimeException("Criteria not found on player data!");
+                        }
+                    }
+
                     ACLMessage reply = message.createReply();
                     reply.setPerformative(ACLMessage.PROPOSE);
 
@@ -110,7 +130,8 @@ public class LobbyOrganizerAgent extends Agent {
                         myAgent.send(reply);
 
                         if (completedTeams >= queueConfig.teamAmount) {
-                            System.out.println("Lobby is completed!!");
+                            System.out.println("Completed Lobby: " + lobby);
+                            resetLobby();
                         }
                     }
                 } catch (IOException e) {
@@ -123,10 +144,17 @@ public class LobbyOrganizerAgent extends Agent {
     }
 }
 
-// TODO: Decide what should be done when lobby is completed
-// TODO: Define how the Criteria should be used to determine player score
-// TODO: Decide if there should be a waiting room for players with low score in all lobbies
-// TODO: Define priority based on player queue time
-// TODO: Verify if team is considered balanced before closing lobby
-// TODO: Define what should be done if team is considered as not balanced
-// TODO: Define if a communication between LobbyOrganizers should be added
+// TODO: Conectar a aplicação a um banco para fins de teste
+
+// TODO: Define how the Criteria should be used to determine player score -> normalizar os valores e calcular a diferença do desvio padrão
+
+// TODO: Decide if there should be a waiting room for players with low score in all lobbies -> vai ter waiting room
+
+// TODO: Define priority based on player queue time -> a prioridade é a ordem da fila
+
+// TODO: Verify if team is considered balanced before closing lobby -> comparar com valores de outros algoritmos (elo por exemplo)
+
+// TODO: Define if a communication between LobbyOrganizers should be added -> nice to have
+
+
+

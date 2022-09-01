@@ -4,8 +4,13 @@
       "name": "level",
       "min": 1,
       "max": 30
+    },
+    {
+      "name": "kill_avg",
+      "min": 0,
+      "max": 100
     }
   ],
-  "teamSize": 3,
+  "teamSize": 5,
   "teamAmount": 2
 }
