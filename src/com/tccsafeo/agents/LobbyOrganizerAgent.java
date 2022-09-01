@@ -2,6 +2,7 @@ package com.tccsafeo.agents;
 
 import com.tccsafeo.entities.Criteria;
 import com.tccsafeo.entities.Player;
+import com.tccsafeo.entities.PlayerData;
 import com.tccsafeo.entities.QueueConfig;
 import com.tccsafeo.utils.Calculator;
 import com.tccsafeo.utils.Configuration;
@@ -29,12 +30,6 @@ public class LobbyOrganizerAgent extends Agent {
         addBehaviour(new TurnAvailableBehaviour());
         addBehaviour(new ListenAdderAgentBehaviour());
         addBehaviour(new ListenAcceptedProposalsBehaviour());
-        addBehaviour(new TickerBehaviour(this, 3000) {
-            @Override
-            protected void onTick() {
-                System.out.println(getName() + ":" + lobby);
-            }
-        });
     }
 
     void resetLobby() {
@@ -44,6 +39,44 @@ public class LobbyOrganizerAgent extends Agent {
         for (Integer i = 0; i < queueConfig.teamAmount; i++) {
             lobby.add(new ArrayList<>());
         }
+    }
+
+    Double getLobbyScoreForCriteria(Criteria criteria, Player newPlayer) {
+        ArrayList<Player> mergedLobby = getMergedLobby();
+        ArrayList<Double> normalizedCriteriaValues = getCriteriaValuesNormalized(criteria, mergedLobby);
+
+        Double standardDeviationWithoutNewPlayer = Calculator.getStandardDeviation(normalizedCriteriaValues);
+
+        Double newPlayerNormalizedCriteria = getPlayerNormalizedCriteria(newPlayer, criteria);
+        normalizedCriteriaValues.add(newPlayerNormalizedCriteria);
+        Double standardDeviationWithNewPlayer = Calculator.getStandardDeviation(normalizedCriteriaValues);
+
+        return Math.abs(standardDeviationWithNewPlayer - standardDeviationWithoutNewPlayer);
+    }
+
+    Double getPlayerNormalizedCriteria(Player player, Criteria criteria) {
+        Integer playerDataIndex = player.findPlayerDataIndex(criteria.name);
+        if (playerDataIndex >= 0) {
+            PlayerData playerData = player.playerData.get(playerDataIndex);
+            return Calculator.normalize(playerData.value, criteria.min, criteria.max);
+        } else {
+            throw new RuntimeException("Criteria does not exist on player!");
+        }
+    }
+
+    ArrayList<Double> getCriteriaValuesNormalized(Criteria criteria, ArrayList<Player> playerList) {
+        ArrayList<Double> criteriaValueList = new ArrayList<>();
+        for (Player player : playerList) {
+            criteriaValueList.add(getPlayerNormalizedCriteria(player, criteria));
+        }
+        return criteriaValueList;
+    }
+
+    ArrayList<Player> getMergedLobby() {
+        ArrayList<Player> mergedLobby = new ArrayList<>();
+        for (ArrayList<Player> team : lobby)
+            mergedLobby.addAll(team);
+        return mergedLobby;
     }
 
     // Behaviour to get lobby configurations from json
@@ -79,21 +112,19 @@ public class LobbyOrganizerAgent extends Agent {
                 try {
                     Player offeredPlayer = JsonParser.entity(message.getContent(), Player.class);
 
+                    ArrayList<Double> criteriaScores = new ArrayList<>();
                     for (Criteria criteria : queueConfig.criteria) {
-                        Integer criteriaIndexOnPlayer = offeredPlayer.findPlayerDataIndex(criteria.name);
-                        if (criteriaIndexOnPlayer >= 0) {
-                            Double normalizedValue = Calculator.normalize(offeredPlayer.playerData.get(criteriaIndexOnPlayer).value, criteria.min, criteria.max);
-                            System.out.println("Normalized " + criteria.name + ": " + normalizedValue);
-                        } else {
-                            throw new RuntimeException("Criteria not found on player data!");
-                        }
+                        criteriaScores.add(getLobbyScoreForCriteria(criteria, offeredPlayer));
                     }
+
+                    System.out.println("Calculated scores: " + criteriaScores);
+                    Double finalScore = Calculator.getAverage(criteriaScores);
+                    finalScore = Double.isNaN(finalScore) ? 0D : finalScore;
 
                     ACLMessage reply = message.createReply();
                     reply.setPerformative(ACLMessage.PROPOSE);
 
-                    Random r = new Random();
-                    String replyContent = String.valueOf(r.nextInt(100));
+                    String replyContent = String.valueOf(finalScore);
 
                     reply.setContent(replyContent);
                     myAgent.send(reply);
@@ -116,6 +147,8 @@ public class LobbyOrganizerAgent extends Agent {
             if (message != null) {
                 try {
                     Player playerToAdd = JsonParser.entity(message.getContent(), Player.class);
+
+                    System.out.println("Adding " + playerToAdd);
 
                     if (completedTeams < queueConfig.teamAmount) {
                         lobby.get(completedTeams).add(playerToAdd);

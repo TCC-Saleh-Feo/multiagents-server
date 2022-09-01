@@ -67,7 +67,7 @@ public class AdderAgent extends Agent {
         private MessageTemplate mt;
         private Integer repliesCount = 0;
         private AID bestLobby;
-        private Integer bestScore;
+        private Double bestScore;
         private Player player;
 
         public OfferPlayerBehaviour(Player currentPlayer) {
@@ -92,8 +92,8 @@ public class AdderAgent extends Agent {
                     ACLMessage reply = myAgent.receive(mt);
                     if (reply != null) {
                         if (reply.getPerformative() == ACLMessage.PROPOSE) {
-                            Integer score = Integer.parseInt(reply.getContent());
-                            if (bestLobby == null || score > bestScore) {
+                            Double score = Double.parseDouble(reply.getContent());
+                            if (bestLobby == null || score < bestScore) {
                                 bestScore = score;
                                 bestLobby = reply.getSender();
                             }
