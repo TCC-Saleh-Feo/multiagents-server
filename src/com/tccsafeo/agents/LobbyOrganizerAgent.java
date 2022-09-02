@@ -179,12 +179,6 @@ public class LobbyOrganizerAgent extends Agent {
 
 // TODO: Conectar a aplicação a um banco para fins de teste
 
-// TODO: Define how the Criteria should be used to determine player score -> normalizar os valores e calcular a diferença do desvio padrão
-
-// TODO: Decide if there should be a waiting room for players with low score in all lobbies -> vai ter waiting room
-
-// TODO: Define priority based on player queue time -> a prioridade é a ordem da fila
-
 // TODO: Verify if team is considered balanced before closing lobby -> comparar com valores de outros algoritmos (elo por exemplo)
 
 // TODO: Define if a communication between LobbyOrganizers should be added -> nice to have

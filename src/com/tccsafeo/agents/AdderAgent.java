@@ -15,11 +15,17 @@ import jade.lang.acl.MessageTemplate;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
+
 
 public class AdderAgent extends Agent {
+    Double MIN_SCORE = 0.1;
 
     ArrayList<Player> playerList = new ArrayList<>();
     ArrayList<Player> addedPlayers = new ArrayList<>();
+
+    Queue<Player> playerQueue = new LinkedList<>();
 
     private ArrayList<AID> lobbyOrganizerAgents = new ArrayList<>();
 
@@ -45,6 +51,16 @@ public class AdderAgent extends Agent {
             @Override
             protected void onTick() {
                 lobbyOrganizerAgents = YellowPage.getAgents(myAgent, "lobby-organizer");
+            }
+        });
+        // Behaviour to offer players in queue
+        addBehaviour(new TickerBehaviour(this, 3000) {
+            @Override
+            protected void onTick() {
+                if (playerQueue.size() > 0) {
+                    System.out.println("Offering player on waiting queue!");
+                    addBehaviour(new OfferPlayerBehaviour(playerQueue.poll()));
+                }
             }
         });
     }
@@ -108,19 +124,25 @@ public class AdderAgent extends Agent {
                     break;
                 case 2:
                     if (bestLobby != null) {
-                        try {
-                            ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
-                            order.addReceiver(bestLobby);
-                            order.setConversationId("offering-player-" + player.playerId);
-                            order.setReplyWith("order" + System.currentTimeMillis());
-                            order.setContent(JsonParser.toJson(player));
-                            myAgent.send(order);
-                            mt = MessageTemplate.and(
-                                    MessageTemplate.MatchConversationId("offering-player-" + player.playerId),
-                                    MessageTemplate.MatchInReplyTo(order.getReplyWith())
+                        if (bestScore > MIN_SCORE) {
+                            System.out.println("Adding player to waiting queue!");
+                            playerQueue.add(player);
+                            actionStep = 4;
+                        } else {
+                            try {
+                                ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+                                order.addReceiver(bestLobby);
+                                order.setConversationId("offering-player-" + player.playerId);
+                                order.setReplyWith("order" + System.currentTimeMillis());
+                                order.setContent(JsonParser.toJson(player));
+                                myAgent.send(order);
+                                mt = MessageTemplate.and(
+                                        MessageTemplate.MatchConversationId("offering-player-" + player.playerId),
+                                        MessageTemplate.MatchInReplyTo(order.getReplyWith())
                                 );
-                        } catch (Exception e) {
-                            System.out.println("Could not parse player to json!");
+                            } catch (Exception e) {
+                                System.out.println("Could not parse player to json!");
+                            }
                         }
                         actionStep++;
                     } else {
