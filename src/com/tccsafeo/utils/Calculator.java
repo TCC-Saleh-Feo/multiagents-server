@@ -30,7 +30,7 @@ public class Calculator {
         return Math.sqrt(standardDeviation / (size - 1));
     }
 
-    public static Double normalize(Integer value, Integer min, Integer max) {
-        return (double) (value - min) / (max - min);
+    public static Double normalize(Double value, Integer min, Integer max) {
+        return (value - min) / (max - min);
     }
 }
