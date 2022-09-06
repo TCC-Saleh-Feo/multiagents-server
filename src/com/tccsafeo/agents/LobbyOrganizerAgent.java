@@ -11,13 +11,11 @@ import com.tccsafeo.utils.YellowPage;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
-import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Random;
 
 public class LobbyOrganizerAgent extends Agent {
 
