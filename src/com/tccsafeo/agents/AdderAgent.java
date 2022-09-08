@@ -1,7 +1,10 @@
 package com.tccsafeo.agents;
 
+import com.tccsafeo.config.AmqpConfig;
+import com.tccsafeo.entities.IncomingQueue;
 import com.tccsafeo.entities.Player;
-import com.tccsafeo.utils.FileUtil;
+import com.tccsafeo.entities.WaitingQueue;
+import com.tccsafeo.utils.AmqpListener;
 import com.tccsafeo.utils.JsonParser;
 import com.tccsafeo.utils.Messenger;
 import com.tccsafeo.utils.YellowPage;
@@ -15,19 +18,15 @@ import jade.lang.acl.MessageTemplate;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
 
 
 public class AdderAgent extends Agent {
     Double MIN_SCORE = 0.1;
 
-    ArrayList<Player> playerList = new ArrayList<>();
-    ArrayList<Player> addedPlayers = new ArrayList<>();
-
-    Queue<Player> playerQueue = new LinkedList<>();
-
     private ArrayList<AID> lobbyOrganizerAgents = new ArrayList<>();
+
+    WaitingQueue waitingQueue = WaitingQueue.getInstance();
+    AmqpListener amqpListener;
 
     protected void setup() {
         addBehaviour(new SetupPlayersBehaviour());
@@ -35,14 +34,16 @@ public class AdderAgent extends Agent {
         addBehaviour(new TickerBehaviour(this, 2000) {
             @Override
             protected void onTick() {
-                if (addedPlayers.size() < playerList.size()) {
-                    Integer currentPlayerPosition = addedPlayers.size();
-
-                    addBehaviour(new OfferPlayerBehaviour(playerList.get(currentPlayerPosition)));
-                } else {
-                    System.out.println("All Players Added!");
-                    this.stop();
-                    doDelete();
+                String playerToAddString = amqpListener.getMessage("INCOMING_QUEUE");
+                if (playerToAddString != null) {
+                    Player playerToAdd = JsonParser.entity(playerToAddString, Player.class);
+                    if (playerToAdd != null) {
+                        addBehaviour(new OfferPlayerBehaviour(playerToAdd));
+                    } else {
+                        System.out.println("All Players Added!");
+                        this.stop();
+                        doDelete();
+                    }
                 }
             }
         });
@@ -53,13 +54,13 @@ public class AdderAgent extends Agent {
                 lobbyOrganizerAgents = YellowPage.getAgents(myAgent, "lobby-organizer");
             }
         });
-        // Behaviour to offer players in queue
+        // Behaviour to offer players in waiting queue
         addBehaviour(new TickerBehaviour(this, 3000) {
             @Override
             protected void onTick() {
-                if (playerQueue.size() > 0) {
+                if (waitingQueue.getQueueSize() > 0) {
                     System.out.println("Offering player on waiting queue!");
-                    addBehaviour(new OfferPlayerBehaviour(playerQueue.poll()));
+                    addBehaviour(new OfferPlayerBehaviour(waitingQueue.getNextPlayer()));
                 }
             }
         });
@@ -68,12 +69,8 @@ public class AdderAgent extends Agent {
     private class SetupPlayersBehaviour extends OneShotBehaviour {
         @Override
         public void action() {
-            try {
-                String playerContent = FileUtil.readFileAsString("src/com/tccsafeo/data/players.json");
-                playerList = JsonParser.arrayList(playerContent, Player.class);
-            } catch (IOException exception) {
-                System.out.println("Could not read players file.");
-            }
+            AmqpConfig amqpConfig = new AmqpConfig();
+            amqpListener = new AmqpListener(amqpConfig.getChannel());
         }
     }
 
@@ -115,6 +112,7 @@ public class AdderAgent extends Agent {
                             }
                             repliesCount++;
                         }
+                        // TODO: add timout in case a lobbyOrganizer does not respond
                         if (repliesCount >= lobbyOrganizerAgents.size()) {
                             actionStep++;
                         }
@@ -126,7 +124,7 @@ public class AdderAgent extends Agent {
                     if (bestLobby != null) {
                         if (bestScore > MIN_SCORE) {
                             System.out.println("Adding player to waiting queue!");
-                            playerQueue.add(player);
+                            waitingQueue.addPlayer(player);
                             actionStep = 4;
                         } else {
                             try {
@@ -140,7 +138,7 @@ public class AdderAgent extends Agent {
                                         MessageTemplate.MatchConversationId("offering-player-" + player.playerId),
                                         MessageTemplate.MatchInReplyTo(order.getReplyWith())
                                 );
-                            } catch (Exception e) {
+                            } catch (IOException e) {
                                 System.out.println("Could not parse player to json!");
                             }
                         }
@@ -152,7 +150,7 @@ public class AdderAgent extends Agent {
                     reply = myAgent.receive(mt);
                     if (reply != null) {
                         if (reply.getPerformative() == ACLMessage.INFORM) {
-                            addedPlayers.add(player);
+                            // TODO: register time to player enter lobby on mongoDB
                         }
                         actionStep++;
                     } else {

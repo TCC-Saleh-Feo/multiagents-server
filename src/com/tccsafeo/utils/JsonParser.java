@@ -17,14 +17,24 @@ public class JsonParser {
         return mapper;
     }
 
-    public static <T> T entity(String json, Class<T> genericClass) throws IOException {
-        return getMapper().readValue(json, genericClass);
+    public static <T> T entity(String json, Class<T> genericClass) {
+        try {
+            return getMapper().readValue(json, genericClass);
+        } catch (IOException exception) {
+            System.out.println("Could not convert string to entity!");
+        }
+        return null;
     }
 
-    public static <T> ArrayList<T> arrayList(String json, Class<T> genericClass) throws IOException {
-        TypeFactory typeFactory = getMapper().getTypeFactory();
-        JavaType type = typeFactory.constructCollectionType(ArrayList.class, genericClass);
-        return getMapper().readValue(json, type);
+    public static <T> ArrayList<T> arrayList(String json, Class<T> genericClass) {
+        try {
+            TypeFactory typeFactory = getMapper().getTypeFactory();
+            JavaType type = typeFactory.constructCollectionType(ArrayList.class, genericClass);
+            return getMapper().readValue(json, type);
+        } catch (IOException exception) {
+            System.out.println("Could not convert string to entity!");
+        }
+        return null;
     }
 
     public static String toJson(Object object) throws IOException {

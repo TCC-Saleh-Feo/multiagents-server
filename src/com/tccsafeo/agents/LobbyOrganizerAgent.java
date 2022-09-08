@@ -107,29 +107,25 @@ public class LobbyOrganizerAgent extends Agent {
             MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.CFP);
             ACLMessage message = myAgent.receive(mt);
             if (message != null) {
-                try {
-                    Player offeredPlayer = JsonParser.entity(message.getContent(), Player.class);
+                Player offeredPlayer = JsonParser.entity(message.getContent(), Player.class);
 
-                    ArrayList<Double> criteriaScores = new ArrayList<>();
-                    for (Criteria criteria : queueConfig.criteria) {
-                        criteriaScores.add(getLobbyScoreForCriteria(criteria, offeredPlayer));
-                    }
-
-                    System.out.println("Calculated scores: " + criteriaScores);
-                    Double finalScore = Calculator.getAverage(criteriaScores);
-                    finalScore = Double.isNaN(finalScore) ? 0D : finalScore;
-
-                    ACLMessage reply = message.createReply();
-                    reply.setPerformative(ACLMessage.PROPOSE);
-
-                    String replyContent = String.valueOf(finalScore);
-
-                    reply.setContent(replyContent);
-                    myAgent.send(reply);
-                    System.out.println("Sending reply: " + replyContent);
-                } catch (IOException exception) {
-                    System.out.println("Could not transform json into Player!");
+                ArrayList<Double> criteriaScores = new ArrayList<>();
+                for (Criteria criteria : queueConfig.criteria) {
+                    criteriaScores.add(getLobbyScoreForCriteria(criteria, offeredPlayer));
                 }
+
+                System.out.println("Calculated scores: " + criteriaScores);
+                Double finalScore = Calculator.getAverage(criteriaScores);
+                finalScore = Double.isNaN(finalScore) ? 0D : finalScore;
+
+                ACLMessage reply = message.createReply();
+                reply.setPerformative(ACLMessage.PROPOSE);
+
+                String replyContent = String.valueOf(finalScore);
+
+                reply.setContent(replyContent);
+                myAgent.send(reply);
+                System.out.println("Sending reply: " + replyContent);
             } else {
                 block();
             }
@@ -143,30 +139,26 @@ public class LobbyOrganizerAgent extends Agent {
             MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
             ACLMessage message = myAgent.receive(mt);
             if (message != null) {
-                try {
-                    Player playerToAdd = JsonParser.entity(message.getContent(), Player.class);
+                Player playerToAdd = JsonParser.entity(message.getContent(), Player.class);
 
-                    System.out.println("Adding " + playerToAdd);
+                System.out.println("Adding " + playerToAdd);
 
-                    if (completedTeams < queueConfig.teamAmount) {
-                        lobby.get(completedTeams).add(playerToAdd);
-                        if (lobby.get(completedTeams).size() >= queueConfig.teamSize) {
-                            completedTeams++;
-                        }
-
-                        ACLMessage reply = message.createReply();
-                        reply.setPerformative(ACLMessage.INFORM);
-                        reply.setContent("OK");
-
-                        myAgent.send(reply);
-
-                        if (completedTeams >= queueConfig.teamAmount) {
-                            System.out.println("Completed Lobby: " + lobby);
-                            resetLobby();
-                        }
+                if (completedTeams < queueConfig.teamAmount) {
+                    lobby.get(completedTeams).add(playerToAdd);
+                    if (lobby.get(completedTeams).size() >= queueConfig.teamSize) {
+                        completedTeams++;
                     }
-                } catch (IOException e) {
-                    System.out.println("Could not parse json to Player!");
+
+                    ACLMessage reply = message.createReply();
+                    reply.setPerformative(ACLMessage.INFORM);
+                    reply.setContent("OK");
+
+                    myAgent.send(reply);
+
+                    if (completedTeams >= queueConfig.teamAmount) {
+                        System.out.println("Completed Lobby: " + lobby);
+                        resetLobby();
+                    }
                 }
             } else {
                 block();
