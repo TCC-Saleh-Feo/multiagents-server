@@ -29,22 +29,17 @@ public class AdderAgent extends Agent {
     AmqpListener waitingQueueListener;
     private final PlayerRepository _playerRepository = new PlayerRepository();
 
-    boolean isIncomingOfferExecuting = false;
-    boolean isWaitingOfferExecuting = false;
-
     protected void setup() {
         addBehaviour(new SetupPlayersBehaviour());
         // Behaviour to send players to lobby agents from time to time
         addBehaviour(new TickerBehaviour(this, 2000) {
             @Override
             protected void onTick() {
-                if (!isIncomingOfferExecuting) {
-                    String playerToAddString = incomingQueueListener.getMessage();
-                    if (playerToAddString != null) {
-                        Player playerToAdd = JsonParser.entity(playerToAddString, Player.class);
-                        if (playerToAdd != null) {
-                            addBehaviour(new OfferPlayerBehaviour(playerToAdd, "INCOMING_QUEUE"));
-                        }
+                String playerToAddString = incomingQueueListener.getMessage();
+                if (playerToAddString != null) {
+                    Player playerToAdd = JsonParser.entity(playerToAddString, Player.class);
+                    if (playerToAdd != null) {
+                        addBehaviour(new OfferPlayerBehaviour(playerToAdd, "INCOMING_QUEUE"));
                     }
                 }
             }
@@ -60,13 +55,11 @@ public class AdderAgent extends Agent {
         addBehaviour(new TickerBehaviour(this, 3000) {
             @Override
             protected void onTick() {
-                if (!isWaitingOfferExecuting) {
-                    String playerToAddString = waitingQueueListener.getMessage();
-                    if (playerToAddString != null) {
-                        Player playerToAdd = JsonParser.entity(playerToAddString, Player.class);
-                        if (playerToAdd != null) {
-                            addBehaviour(new OfferPlayerBehaviour(playerToAdd, "WAITING_QUEUE"));
-                        }
+                String playerToAddString = waitingQueueListener.getMessage();
+                if (playerToAddString != null) {
+                    Player playerToAdd = JsonParser.entity(playerToAddString, Player.class);
+                    if (playerToAdd != null) {
+                        addBehaviour(new OfferPlayerBehaviour(playerToAdd, "WAITING_QUEUE"));
                     }
                 }
             }
@@ -107,10 +100,6 @@ public class AdderAgent extends Agent {
         public void action() {
             switch (actionStep) {
                 case 0:
-                    if (queueType == "INCOMING_QUEUE")
-                        isIncomingOfferExecuting = true;
-                    if (queueType == "WAITING_QUEUE")
-                        isWaitingOfferExecuting = true;
                     executionStart = System.currentTimeMillis();
                     if (lobbyOrganizerAgents.size() > 0) {
                         _setPlayerInitialTime(player);    // sets the player's entry time in the queue
@@ -185,10 +174,6 @@ public class AdderAgent extends Agent {
         @Override
         public boolean done() {
             if (actionStep == 4) {
-                if (queueType == "INCOMING_QUEUE")
-                    isIncomingOfferExecuting = false;
-                if (queueType == "WAITING_QUEUE")
-                    isWaitingOfferExecuting = false;
                 return true;
             }
             return false;

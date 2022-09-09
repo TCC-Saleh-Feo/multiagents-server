@@ -5,7 +5,7 @@ services:
       ports:
         - "27017:27017"
       volumes:
-        - "~/TCC/data/server/mongo:/data/db"
+        - "~/TCC/data/server/mongo:/data"
       environment:
         MONGO_INITDB_ROOT_USERNAME: user
         MONGO_INITDB_ROOT_PASSWORD: password
