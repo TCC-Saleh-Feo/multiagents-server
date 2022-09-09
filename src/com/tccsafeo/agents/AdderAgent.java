@@ -73,6 +73,7 @@ public class AdderAgent extends Agent {
         public void action() {
             AmqpConfig amqpConfig = new AmqpConfig();
             amqpListener = new AmqpListener(amqpConfig.getChannel());
+            YellowPage.addAgent(myAgent, "adder");
         }
     }
 
