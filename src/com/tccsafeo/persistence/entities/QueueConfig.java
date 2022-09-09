@@ -1,4 +1,4 @@
-package com.tccsafeo.entities;
+package com.tccsafeo.persistence.entities;
 
 import java.util.ArrayList;
 
