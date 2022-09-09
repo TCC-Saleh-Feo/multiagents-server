@@ -157,8 +157,8 @@ public class LobbyOrganizerAgent extends Agent {
                     myAgent.send(reply);
 
                     if (completedTeams >= queueConfig.teamAmount) {
-                        for (List<Player> lob : lobby.getLobby()) {
-                            System.out.println(myAgent.getName() + " completed Lobby: " + lob);
+                        for (List<Player> team : lobby.getLobby()) {
+                            System.out.println(myAgent.getName() + " completed Team in Lobby: " + team);
                         }
                         try {
                             _setLobbyFinalTime();   // Set final time on Lobby and save history

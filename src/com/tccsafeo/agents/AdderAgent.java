@@ -17,7 +17,6 @@ import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 
@@ -31,21 +30,21 @@ public class AdderAgent extends Agent {
     AmqpListener amqpListener;
     private PlayerRepository _playerRepository = new PlayerRepository();
 
+    boolean isOfferExecuting = false;
+
     protected void setup() {
         addBehaviour(new SetupPlayersBehaviour());
         // Behaviour to send players to lobby agents from time to time
         addBehaviour(new TickerBehaviour(this, 2000) {
             @Override
             protected void onTick() {
-                String playerToAddString = amqpListener.getMessage("INCOMING_QUEUE");
-                if (playerToAddString != null) {
-                    Player playerToAdd = JsonParser.entity(playerToAddString, Player.class);
-                    if (playerToAdd != null) {
-                        addBehaviour(new OfferPlayerBehaviour(playerToAdd));
-                    } else {
-                        System.out.println("All Players Added!");
-                        this.stop();
-                        doDelete();
+                if (!isOfferExecuting) {
+                    String playerToAddString = amqpListener.getMessage("INCOMING_QUEUE");
+                    if (playerToAddString != null) {
+                        Player playerToAdd = JsonParser.entity(playerToAddString, Player.class);
+                        if (playerToAdd != null) {
+                            addBehaviour(new OfferPlayerBehaviour(playerToAdd));
+                        }
                     }
                 }
             }
@@ -96,17 +95,16 @@ public class AdderAgent extends Agent {
         public void action() {
             switch (actionStep) {
                 case 0:
+                    isOfferExecuting = true;
                     executionStart = System.currentTimeMillis();
-                    try {
-                        if (lobbyOrganizerAgents.size() > 0) {
-                            _setPlayerInitialTime(player);    // sets the player's entry time in the queue
-                            mt = Messenger.sendPlayerOffer(myAgent, lobbyOrganizerAgents, player);
-                            System.out.println("Message sent");
-                        }
-                    } catch (IOException exception) {
-                        System.out.println("Error converting player to json");
+                    if (lobbyOrganizerAgents.size() > 0) {
+                        _setPlayerInitialTime(player);    // sets the player's entry time in the queue
+                        mt = Messenger.sendPlayerOffer(myAgent, lobbyOrganizerAgents, player);
+                        System.out.println("Message sent");
+                        actionStep++;
+                    } else {
+                        block();
                     }
-                    actionStep++;
                     break;
                 case 1:
                     ACLMessage reply;
@@ -139,22 +137,18 @@ public class AdderAgent extends Agent {
                             waitingQueue.addPlayer(player);
                             actionStep = 4;
                         } else {
-                            try {
-                                ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
-                                order.addReceiver(bestLobby);
-                                order.setConversationId("offering-player-" + player.playerId);
-                                order.setReplyWith("order" + System.currentTimeMillis());
-                                order.setContent(JsonParser.toJson(player));
-                                myAgent.send(order);
-                                mt = MessageTemplate.and(
-                                        MessageTemplate.MatchConversationId("offering-player-" + player.playerId),
-                                        MessageTemplate.MatchInReplyTo(order.getReplyWith())
-                                );
-                            } catch (IOException e) {
-                                System.out.println("Could not parse player to json!");
-                            }
+                            ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+                            order.addReceiver(bestLobby);
+                            order.setConversationId("offering-player-" + player.playerId);
+                            order.setReplyWith("order" + System.currentTimeMillis());
+                            order.setContent(JsonParser.toJson(player));
+                            myAgent.send(order);
+                            mt = MessageTemplate.and(
+                                    MessageTemplate.MatchConversationId("offering-player-" + player.playerId),
+                                    MessageTemplate.MatchInReplyTo(order.getReplyWith())
+                            );
+                            actionStep++;
                         }
-                        actionStep++;
                     } else {
                         actionStep = 4;
                     }
@@ -175,8 +169,10 @@ public class AdderAgent extends Agent {
 
         @Override
         public boolean done() {
-            if (actionStep == 4)
+            if (actionStep == 4) {
+                isOfferExecuting = false;
                 return true;
+            }
             return false;
         }
 

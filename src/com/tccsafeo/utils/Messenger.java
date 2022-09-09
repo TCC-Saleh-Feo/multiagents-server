@@ -32,7 +32,7 @@ public class Messenger {
         );
     }
 
-    public static MessageTemplate sendPlayerOffer(Agent senderAgent, ArrayList<AID> receivers, Player player) throws IOException {
+    public static MessageTemplate sendPlayerOffer(Agent senderAgent, ArrayList<AID> receivers, Player player) {
         return sendMessage(
                 senderAgent,
                 receivers,

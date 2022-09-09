@@ -37,7 +37,12 @@ public class JsonParser {
         return null;
     }
 
-    public static String toJson(Object object) throws IOException {
-        return getMapper().writeValueAsString(object);
+    public static String toJson(Object object) {
+        try {
+            return getMapper().writeValueAsString(object);
+        } catch (IOException exception) {
+            System.out.println("String could not be converted to JSON!");
+        }
+        return null;
     }
 }
