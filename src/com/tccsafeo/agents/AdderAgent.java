@@ -3,7 +3,6 @@ package com.tccsafeo.agents;
 import com.tccsafeo.config.AmqpConfig;
 import com.tccsafeo.persistence.entities.Player;
 import com.tccsafeo.persistence.entities.PlayerEntity;
-import com.tccsafeo.persistence.entities.WaitingQueue;
 import com.tccsafeo.persistence.repositories.PlayerRepository;
 import com.tccsafeo.utils.AmqpListener;
 import com.tccsafeo.utils.JsonParser;
@@ -26,11 +25,12 @@ public class AdderAgent extends Agent {
 
     private ArrayList<AID> lobbyOrganizerAgents = new ArrayList<>();
 
-    WaitingQueue waitingQueue = WaitingQueue.getInstance();
-    AmqpListener amqpListener;
-    private PlayerRepository _playerRepository = new PlayerRepository();
+    AmqpListener incomingQueueListener;
+    AmqpListener waitingQueueListener;
+    private final PlayerRepository _playerRepository = new PlayerRepository();
 
-    boolean isOfferExecuting = false;
+    boolean isIncomingOfferExecuting = false;
+    boolean isWaitingOfferExecuting = false;
 
     protected void setup() {
         addBehaviour(new SetupPlayersBehaviour());
@@ -38,12 +38,12 @@ public class AdderAgent extends Agent {
         addBehaviour(new TickerBehaviour(this, 2000) {
             @Override
             protected void onTick() {
-                if (!isOfferExecuting) {
-                    String playerToAddString = amqpListener.getMessage("INCOMING_QUEUE");
+                if (!isIncomingOfferExecuting) {
+                    String playerToAddString = incomingQueueListener.getMessage();
                     if (playerToAddString != null) {
                         Player playerToAdd = JsonParser.entity(playerToAddString, Player.class);
                         if (playerToAdd != null) {
-                            addBehaviour(new OfferPlayerBehaviour(playerToAdd));
+                            addBehaviour(new OfferPlayerBehaviour(playerToAdd, "INCOMING_QUEUE"));
                         }
                     }
                 }
@@ -60,9 +60,14 @@ public class AdderAgent extends Agent {
         addBehaviour(new TickerBehaviour(this, 3000) {
             @Override
             protected void onTick() {
-                if (waitingQueue.getQueueSize() > 0) {
-                    System.out.println("Offering player on waiting queue!");
-                    addBehaviour(new OfferPlayerBehaviour(waitingQueue.getNextPlayer()));
+                if (!isWaitingOfferExecuting) {
+                    String playerToAddString = waitingQueueListener.getMessage();
+                    if (playerToAddString != null) {
+                        Player playerToAdd = JsonParser.entity(playerToAddString, Player.class);
+                        if (playerToAdd != null) {
+                            addBehaviour(new OfferPlayerBehaviour(playerToAdd, "WAITING_QUEUE"));
+                        }
+                    }
                 }
             }
         });
@@ -71,8 +76,12 @@ public class AdderAgent extends Agent {
     private class SetupPlayersBehaviour extends OneShotBehaviour {
         @Override
         public void action() {
-            AmqpConfig amqpConfig = new AmqpConfig();
-            amqpListener = new AmqpListener(amqpConfig.getChannel());
+            AmqpConfig inComingQueueConfig = new AmqpConfig("INCOMING_QUEUE");
+            incomingQueueListener = new AmqpListener(inComingQueueConfig.getChannel(), "INCOMING_QUEUE");
+
+            AmqpConfig waitingQueueConfig = new AmqpConfig("WAITING_QUEUE");
+            waitingQueueListener = new AmqpListener(waitingQueueConfig.getChannel(), "WAITING_QUEUE");
+
             YellowPage.addAgent(myAgent, "adder");
         }
     }
@@ -84,19 +93,24 @@ public class AdderAgent extends Agent {
         private Integer repliesCount = 0;
         private AID bestLobby;
         private Double bestScore;
-        private Player player;
+        private final Player player;
         private PlayerEntity playerWithTime;
         private long executionStart;
+        private String queueType;
 
-        public OfferPlayerBehaviour(Player currentPlayer) {
+        public OfferPlayerBehaviour(Player currentPlayer, String queueType) {
             this.player = currentPlayer;
+            this.queueType = queueType;
         }
 
         @Override
         public void action() {
             switch (actionStep) {
                 case 0:
-                    isOfferExecuting = true;
+                    if (queueType == "INCOMING_QUEUE")
+                        isIncomingOfferExecuting = true;
+                    if (queueType == "WAITING_QUEUE")
+                        isWaitingOfferExecuting = true;
                     executionStart = System.currentTimeMillis();
                     if (lobbyOrganizerAgents.size() > 0) {
                         _setPlayerInitialTime(player);    // sets the player's entry time in the queue
@@ -116,7 +130,7 @@ public class AdderAgent extends Agent {
                         reply = myAgent.receive(mt);
                         if (reply != null) {
                             if (reply.getPerformative() == ACLMessage.PROPOSE) {
-                                Double score = Double.parseDouble(reply.getContent());
+                                double score = Double.parseDouble(reply.getContent());
                                 if (bestLobby == null || score < bestScore) {
                                     bestScore = score;
                                     bestLobby = reply.getSender();
@@ -135,7 +149,7 @@ public class AdderAgent extends Agent {
                     if (bestLobby != null) {
                         if (bestScore > MIN_SCORE) {
                             System.out.println("Adding player to waiting queue!");
-                            waitingQueue.addPlayer(player);
+                            waitingQueueListener.publishMessage(JsonParser.toJson(player));
                             actionStep = 4;
                         } else {
                             ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
@@ -158,7 +172,7 @@ public class AdderAgent extends Agent {
                     if (reply != null) {
                         if (reply.getPerformative() == ACLMessage.INFORM) {
                             // sets the player's final waiting time in the queue
-                            _setPlayerFinalTime(player);
+                            _setPlayerFinalTime();
                             _savePlayerWithTime();
                         }
                         actionStep++;
@@ -171,7 +185,10 @@ public class AdderAgent extends Agent {
         @Override
         public boolean done() {
             if (actionStep == 4) {
-                isOfferExecuting = false;
+                if (queueType == "INCOMING_QUEUE")
+                    isIncomingOfferExecuting = false;
+                if (queueType == "WAITING_QUEUE")
+                    isWaitingOfferExecuting = false;
                 return true;
             }
             return false;
@@ -181,7 +198,7 @@ public class AdderAgent extends Agent {
             playerWithTime = new PlayerEntity(player, Instant.now());
         }
 
-        private void _setPlayerFinalTime(Player player) {
+        private void _setPlayerFinalTime() {
             playerWithTime.setEndLobbyTime(Instant.now());
         }
 

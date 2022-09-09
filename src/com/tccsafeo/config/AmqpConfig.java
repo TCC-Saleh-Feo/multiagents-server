@@ -12,12 +12,14 @@ import java.util.concurrent.TimeoutException;
 
 public class AmqpConfig {
     private Channel channel;
+    private String queueName;
 
-    public AmqpConfig() {
+    public AmqpConfig(String queueName) {
         try {
+            this.queueName = queueName;
             channel = connection();
             createExchange(channel);
-            createQueue(channel);
+            createQueue(channel, queueName);
         } catch (IOException |
                 URISyntaxException |
                 NoSuchAlgorithmException |
@@ -40,9 +42,9 @@ public class AmqpConfig {
         channel.exchangeDeclare("DX_PLAYER", "direct", true);
     }
 
-    private void createQueue(Channel channel) throws IOException {
-        channel.queueDeclare("INCOMING_QUEUE", true, false, false, null);
-        channel.queueBind("INCOMING_QUEUE", "DX_PLAYER", "INCOMING_QUEUE");
+    private void createQueue(Channel channel, String queueName) throws IOException {
+        channel.queueDeclare(queueName, true, false, false, null);
+        channel.queueBind(queueName, "DX_PLAYER", queueName);
     }
 
     public Channel getChannel() {

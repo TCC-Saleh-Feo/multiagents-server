@@ -22,7 +22,7 @@ public class LobbyOrganizerAgent extends Agent {
     QueueConfig queueConfig;
     LobbyEntity lobby = new LobbyEntity(Instant.now());
     Integer completedTeams = 0;
-    private LobbyRepository lobbyRepository = new LobbyRepository();
+    private final LobbyRepository lobbyRepository = new LobbyRepository();
 
     protected void setup() {
         addBehaviour(new SetupConfigsBehaviour());
@@ -94,7 +94,7 @@ public class LobbyOrganizerAgent extends Agent {
     }
 
     // Behaviour to add LobbyOrganizerAgent into yellow page
-    private class TurnAvailableBehaviour extends OneShotBehaviour {
+    private static class TurnAvailableBehaviour extends OneShotBehaviour {
         @Override
         public void action() {
             YellowPage.addAgent(myAgent, "lobby-organizer");
@@ -183,12 +183,6 @@ public class LobbyOrganizerAgent extends Agent {
         }
     }
 }
-
-// TODO: Conectar a aplicação a um banco para fins de teste
-
-// TODO: Verify if team is considered balanced before closing lobby -> comparar com valores de outros algoritmos (elo por exemplo)
-
-// TODO: Define if a communication between LobbyOrganizers should be added -> nice to have
 
 
 
