@@ -86,6 +86,7 @@ public class AdderAgent extends Agent {
         private Double bestScore;
         private Player player;
         private PlayerEntity playerWithTime;
+        private long executionStart;
 
         public OfferPlayerBehaviour(Player currentPlayer) {
             this.player = currentPlayer;
@@ -95,6 +96,7 @@ public class AdderAgent extends Agent {
         public void action() {
             switch (actionStep) {
                 case 0:
+                    executionStart = System.currentTimeMillis();
                     try {
                         if (lobbyOrganizerAgents.size() > 0) {
                             _setPlayerInitialTime(player);    // sets the player's entry time in the queue
@@ -107,22 +109,27 @@ public class AdderAgent extends Agent {
                     actionStep++;
                     break;
                 case 1:
-                    ACLMessage reply = myAgent.receive(mt);
-                    if (reply != null) {
-                        if (reply.getPerformative() == ACLMessage.PROPOSE) {
-                            Double score = Double.parseDouble(reply.getContent());
-                            if (bestLobby == null || score < bestScore) {
-                                bestScore = score;
-                                bestLobby = reply.getSender();
-                            }
-                            repliesCount++;
-                        }
-                        // TODO: add timout in case a lobbyOrganizer does not respond
-                        if (repliesCount >= lobbyOrganizerAgents.size()) {
-                            actionStep++;
-                        }
+                    ACLMessage reply;
+                    System.out.println("Time: " + (System.currentTimeMillis() - executionStart));
+                    if (System.currentTimeMillis() - executionStart > 30000) {
+                        actionStep++;
                     } else {
-                        block();
+                        reply = myAgent.receive(mt);
+                        if (reply != null) {
+                            if (reply.getPerformative() == ACLMessage.PROPOSE) {
+                                Double score = Double.parseDouble(reply.getContent());
+                                if (bestLobby == null || score < bestScore) {
+                                    bestScore = score;
+                                    bestLobby = reply.getSender();
+                                }
+                                repliesCount++;
+                            }
+                            if (repliesCount >= lobbyOrganizerAgents.size()) {
+                                actionStep++;
+                            }
+                        } else {
+                            block();
+                        }
                     }
                     break;
                 case 2:
