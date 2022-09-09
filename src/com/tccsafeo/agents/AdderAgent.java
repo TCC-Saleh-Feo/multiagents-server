@@ -1,9 +1,10 @@
 package com.tccsafeo.agents;
 
 import com.tccsafeo.config.AmqpConfig;
-import com.tccsafeo.entities.IncomingQueue;
-import com.tccsafeo.entities.Player;
-import com.tccsafeo.entities.WaitingQueue;
+import com.tccsafeo.persistence.entities.Player;
+import com.tccsafeo.persistence.entities.PlayerEntity;
+import com.tccsafeo.persistence.entities.WaitingQueue;
+import com.tccsafeo.persistence.repositories.PlayerRepository;
 import com.tccsafeo.utils.AmqpListener;
 import com.tccsafeo.utils.JsonParser;
 import com.tccsafeo.utils.Messenger;
@@ -17,6 +18,7 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 
 
@@ -27,6 +29,7 @@ public class AdderAgent extends Agent {
 
     WaitingQueue waitingQueue = WaitingQueue.getInstance();
     AmqpListener amqpListener;
+    private PlayerRepository _playerRepository = new PlayerRepository();
 
     protected void setup() {
         addBehaviour(new SetupPlayersBehaviour());
@@ -82,6 +85,7 @@ public class AdderAgent extends Agent {
         private AID bestLobby;
         private Double bestScore;
         private Player player;
+        private PlayerEntity playerWithTime;
 
         public OfferPlayerBehaviour(Player currentPlayer) {
             this.player = currentPlayer;
@@ -93,6 +97,7 @@ public class AdderAgent extends Agent {
                 case 0:
                     try {
                         if (lobbyOrganizerAgents.size() > 0) {
+                            _setPlayerInitialTime(player);    // sets the player's entry time in the queue
                             mt = Messenger.sendPlayerOffer(myAgent, lobbyOrganizerAgents, player);
                             System.out.println("Message sent");
                         }
@@ -150,7 +155,9 @@ public class AdderAgent extends Agent {
                     reply = myAgent.receive(mt);
                     if (reply != null) {
                         if (reply.getPerformative() == ACLMessage.INFORM) {
-                            // TODO: register time to player enter lobby on mongoDB
+                            // sets the player's final waiting time in the queue
+                            _setPlayerFinalTime(player);
+                            _savePlayerWithTime();
                         }
                         actionStep++;
                     } else {
@@ -164,6 +171,18 @@ public class AdderAgent extends Agent {
             if (actionStep == 4)
                 return true;
             return false;
+        }
+
+        private void _setPlayerInitialTime(Player player) {
+            playerWithTime = new PlayerEntity(player, Instant.now());
+        }
+
+        private void _setPlayerFinalTime(Player player) {
+            playerWithTime.setEndLobbyTime(Instant.now());
+        }
+
+        private void _savePlayerWithTime() {
+            _playerRepository.save(playerWithTime);
         }
     }
 }

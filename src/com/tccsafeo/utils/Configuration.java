@@ -1,7 +1,8 @@
 package com.tccsafeo.utils;
 
 import java.io.IOException;
-import com.tccsafeo.entities.QueueConfig;
+
+import com.tccsafeo.persistence.entities.QueueConfig;
 
 public class Configuration {
     private static Configuration instance;

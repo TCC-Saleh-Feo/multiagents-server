@@ -1,10 +1,10 @@
-package com.tccsafeo.data.repository;
+package com.tccsafeo.persistence.repositories;
 
 import org.mongodb.morphia.Datastore;
 
 public abstract class GenericRepository<T>
 {
-    private Datastore _datastore;
+    protected Datastore _datastore;
 
     private Class<T> _kclass;
 

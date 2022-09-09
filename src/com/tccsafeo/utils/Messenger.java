@@ -1,6 +1,5 @@
 package com.tccsafeo.utils;
 
-import com.tccsafeo.entities.Player;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.lang.acl.ACLMessage;
@@ -8,6 +7,8 @@ import jade.lang.acl.MessageTemplate;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
+import com.tccsafeo.persistence.entities.Player;
 
 public class Messenger {
     public static MessageTemplate sendMessage(

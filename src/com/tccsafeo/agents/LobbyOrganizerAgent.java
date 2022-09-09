@@ -1,9 +1,9 @@
 package com.tccsafeo.agents;
 
-import com.tccsafeo.entities.Criteria;
-import com.tccsafeo.entities.Player;
-import com.tccsafeo.entities.PlayerData;
-import com.tccsafeo.entities.QueueConfig;
+import com.tccsafeo.persistence.entities.Criteria;
+import com.tccsafeo.persistence.entities.Player;
+import com.tccsafeo.persistence.entities.PlayerData;
+import com.tccsafeo.persistence.entities.QueueConfig;
 import com.tccsafeo.utils.Calculator;
 import com.tccsafeo.utils.Configuration;
 import com.tccsafeo.utils.JsonParser;
