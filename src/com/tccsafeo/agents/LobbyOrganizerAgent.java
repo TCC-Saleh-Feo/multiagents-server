@@ -1,9 +1,7 @@
 package com.tccsafeo.agents;
 
-import com.tccsafeo.persistence.entities.Criteria;
-import com.tccsafeo.persistence.entities.Player;
-import com.tccsafeo.persistence.entities.PlayerData;
-import com.tccsafeo.persistence.entities.QueueConfig;
+import com.tccsafeo.persistence.entities.*;
+import com.tccsafeo.persistence.repositories.LobbyRepository;
 import com.tccsafeo.utils.Calculator;
 import com.tccsafeo.utils.Configuration;
 import com.tccsafeo.utils.JsonParser;
@@ -15,13 +13,16 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 
 public class LobbyOrganizerAgent extends Agent {
 
     QueueConfig queueConfig;
-    ArrayList<ArrayList<Player>> lobby = new ArrayList<>();
+    LobbyEntity lobby = new LobbyEntity(Instant.now());
     Integer completedTeams = 0;
+    private LobbyRepository lobbyRepository = new LobbyRepository();
 
     protected void setup() {
         addBehaviour(new SetupConfigsBehaviour());
@@ -31,11 +32,11 @@ public class LobbyOrganizerAgent extends Agent {
     }
 
     void resetLobby() {
-        lobby = new ArrayList<>();
+        lobby = new LobbyEntity(Instant.now());
         completedTeams = 0;
 
-        for (Integer i = 0; i < queueConfig.teamAmount; i++) {
-            lobby.add(new ArrayList<>());
+        for (int i = 0; i < queueConfig.teamAmount; i++) {
+            lobby.getLobby().add(new ArrayList<>());
         }
     }
 
@@ -72,7 +73,7 @@ public class LobbyOrganizerAgent extends Agent {
 
     ArrayList<Player> getMergedLobby() {
         ArrayList<Player> mergedLobby = new ArrayList<>();
-        for (ArrayList<Player> team : lobby)
+        for (List<Player> team : lobby.getLobby())
             mergedLobby.addAll(team);
         return mergedLobby;
     }
@@ -144,8 +145,8 @@ public class LobbyOrganizerAgent extends Agent {
                 System.out.println("Adding " + playerToAdd);
 
                 if (completedTeams < queueConfig.teamAmount) {
-                    lobby.get(completedTeams).add(playerToAdd);
-                    if (lobby.get(completedTeams).size() >= queueConfig.teamSize) {
+                    lobby.getLobby().get(completedTeams).add(playerToAdd);
+                    if (lobby.getLobby().get(completedTeams).size() >= queueConfig.teamSize) {
                         completedTeams++;
                     }
 
@@ -156,13 +157,29 @@ public class LobbyOrganizerAgent extends Agent {
                     myAgent.send(reply);
 
                     if (completedTeams >= queueConfig.teamAmount) {
-                        System.out.println("Completed Lobby: " + lobby);
+                        for (List<Player> lob : lobby.getLobby()) {
+                            System.out.println("Completed Lobby: " + lob);
+                        }
+                        try {
+                            _setLobbyFinalTime();   // Set final time on Lobby and save history
+                        } catch (Exception e) {
+                            System.out.println(e.getCause());
+                            System.out.println(e.getLocalizedMessage());
+                            for (StackTraceElement element : e.getStackTrace()) {
+                                System.out.println(element);
+                            }
+                        }
                         resetLobby();
                     }
                 }
             } else {
                 block();
             }
+        }
+
+        private void _setLobbyFinalTime() {
+            lobby.setEndLobbyTime(Instant.now());
+            lobbyRepository.save(lobby);
         }
     }
 }
