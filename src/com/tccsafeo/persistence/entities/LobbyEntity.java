@@ -5,7 +5,9 @@ import org.mongodb.morphia.annotations.Id;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Entity("lobbyEntity")
 public class LobbyEntity {
@@ -14,11 +16,16 @@ public class LobbyEntity {
 
     private List<List<Player>> lobby = new ArrayList<>();
 
+    private String lobbyAgentRef;
+
     private Instant startLobbyTime;
 
     private Instant endLobbyTime;
 
-    public LobbyEntity(Instant startLobbyTime) {
+    private Map<String, String> deviation = new HashMap<>();
+
+    public LobbyEntity(String lobbyAgentRef, Instant startLobbyTime) {
+        this.lobbyAgentRef = lobbyAgentRef;
         this.startLobbyTime = startLobbyTime;
     }
 
@@ -55,5 +62,21 @@ public class LobbyEntity {
 
     public void setEndLobbyTime(Instant endLobbyTime) {
         this.endLobbyTime = endLobbyTime;
+    }
+
+    public String getLobbyAgentRef() {
+        return lobbyAgentRef;
+    }
+
+    public void setLobbyAgentRef(String lobbyAgentRef) {
+        this.lobbyAgentRef = lobbyAgentRef;
+    }
+
+    public Map<String, String> getDeviation() {
+        return deviation;
+    }
+
+    public void setDeviation(Map<String, String> deviation) {
+        this.deviation = deviation;
     }
 }

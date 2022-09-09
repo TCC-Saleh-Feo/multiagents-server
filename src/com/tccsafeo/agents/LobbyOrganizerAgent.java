@@ -20,7 +20,7 @@ import java.util.List;
 public class LobbyOrganizerAgent extends Agent {
 
     QueueConfig queueConfig;
-    LobbyEntity lobby = new LobbyEntity(Instant.now());
+    LobbyEntity lobby = new LobbyEntity(getLocalName(), Instant.now());
     Integer completedTeams = 0;
     private final LobbyRepository lobbyRepository = new LobbyRepository();
 
@@ -32,7 +32,7 @@ public class LobbyOrganizerAgent extends Agent {
     }
 
     void resetLobby() {
-        lobby = new LobbyEntity(Instant.now());
+        lobby = new LobbyEntity(getLocalName(), Instant.now());
         completedTeams = 0;
 
         for (int i = 0; i < queueConfig.teamAmount; i++) {
@@ -112,7 +112,9 @@ public class LobbyOrganizerAgent extends Agent {
 
                 ArrayList<Double> criteriaScores = new ArrayList<>();
                 for (Criteria criteria : queueConfig.criteria) {
-                    criteriaScores.add(getLobbyScoreForCriteria(criteria, offeredPlayer));
+                    Double criteriaValue = getLobbyScoreForCriteria(criteria, offeredPlayer);
+                    criteriaScores.add(criteriaValue);
+                    _setCriteriaOnLobbyEntity(criteria.name, criteriaValue);
                 }
 
                 System.out.println("Calculated scores: " + criteriaScores);
@@ -131,6 +133,10 @@ public class LobbyOrganizerAgent extends Agent {
                 block();
             }
         }
+    }
+
+    private void _setCriteriaOnLobbyEntity(String name, Double criteriaValue) {
+        lobby.getDeviation().put(name, criteriaValue.toString());
     }
 
     // Behaviour to listen for accepted player proposals
