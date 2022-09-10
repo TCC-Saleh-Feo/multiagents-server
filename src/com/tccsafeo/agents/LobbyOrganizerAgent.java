@@ -82,6 +82,8 @@ public class LobbyOrganizerAgent extends Agent {
     private class SetupConfigsBehaviour extends OneShotBehaviour {
         @Override
         public void action() {
+            System.out.println(">>> Setup Lobby Organizer Agent, Name: " + getLocalName());
+
             try {
                 Configuration config = Configuration.getInstance();
                 queueConfig = config.getQueueConfig();

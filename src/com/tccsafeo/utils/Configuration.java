@@ -23,4 +23,8 @@ public class Configuration {
     public QueueConfig getQueueConfig() {
         return queueConfig;
     }
+
+    public static String getAgentRealName(String agentName) {
+        return agentName.replaceAll("\\d", "");
+    }
 }

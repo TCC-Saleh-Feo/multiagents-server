@@ -71,6 +71,8 @@ public class AdderAgent extends Agent {
     private class SetupPlayersBehaviour extends OneShotBehaviour {
         @Override
         public void action() {
+            System.out.println(">>> Setup Adder Agent, Name: " + getLocalName());
+
             AmqpConfig inComingQueueConfig = new AmqpConfig("INCOMING_QUEUE");
             incomingQueueListener = new AmqpListener(inComingQueueConfig.getChannel(), "INCOMING_QUEUE");
 
@@ -178,10 +180,7 @@ public class AdderAgent extends Agent {
 
         @Override
         public boolean done() {
-            if (actionStep == 4) {
-                return true;
-            }
-            return false;
+            return actionStep == 4;
         }
 
         private void _setPlayerInitialTime(Player player) {
