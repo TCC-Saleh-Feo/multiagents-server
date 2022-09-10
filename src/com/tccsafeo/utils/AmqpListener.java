@@ -1,8 +1,8 @@
 package com.tccsafeo.utils;
 
-import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.GetResponse;
+import com.tccsafeo.persistence.entities.QueueMessage;
 
 import java.io.IOException;
 
@@ -16,15 +16,33 @@ public class AmqpListener {
         this.queueName = queueName;
     }
 
-    public String getMessage() {
+    public QueueMessage getMessage() {
         try {
             GetResponse response = channel.basicGet(queueName, false);
             if (response != null) {
-                byte[] body = response.getBody();
-                return new String(body);
+                long deliveryTag = response.getEnvelope().getDeliveryTag();
+                String message = new String(response.getBody());
+                return new QueueMessage(message, deliveryTag);
             }
         } catch (IOException exception) {
             System.out.println("Could not get message from queue!");
+        }
+        return null;
+    }
+
+    public void ackMessage(long deliveryTag) {
+        try {
+        channel.basicAck(deliveryTag, false);
+        } catch (IOException exception) {
+            System.out.println("Could not ack message!");
+        }
+    }
+
+    public GetResponse getResponse() {
+        try {
+            return channel.basicGet(queueName, false);
+        } catch (IOException exception) {
+            System.out.println("Could not get response from queue!");
         }
         return null;
     }

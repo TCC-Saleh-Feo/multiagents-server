@@ -19,7 +19,7 @@ public class AmqpConfig {
             this.queueName = queueName;
             channel = connection();
             createExchange(channel);
-            createQueue(channel, queueName);
+            createQueue(channel);
         } catch (IOException |
                 URISyntaxException |
                 NoSuchAlgorithmException |
@@ -42,7 +42,7 @@ public class AmqpConfig {
         channel.exchangeDeclare("DX_PLAYER", "direct", true);
     }
 
-    private void createQueue(Channel channel, String queueName) throws IOException {
+    private void createQueue(Channel channel) throws IOException {
         channel.queueDeclare(queueName, true, false, false, null);
         channel.queueBind(queueName, "DX_PLAYER", queueName);
     }

@@ -3,6 +3,7 @@ package com.tccsafeo.agents;
 import com.tccsafeo.config.AmqpConfig;
 import com.tccsafeo.persistence.entities.Player;
 import com.tccsafeo.persistence.entities.PlayerEntity;
+import com.tccsafeo.persistence.entities.QueueMessage;
 import com.tccsafeo.persistence.repositories.PlayerRepository;
 import com.tccsafeo.utils.AmqpListener;
 import com.tccsafeo.utils.JsonParser;
@@ -35,13 +36,7 @@ public class AdderAgent extends Agent {
         addBehaviour(new TickerBehaviour(this, 2000) {
             @Override
             protected void onTick() {
-                String playerToAddString = incomingQueueListener.getMessage();
-                if (playerToAddString != null) {
-                    Player playerToAdd = JsonParser.entity(playerToAddString, Player.class);
-                    if (playerToAdd != null) {
-                        addBehaviour(new OfferPlayerBehaviour(playerToAdd, "INCOMING_QUEUE"));
-                    }
-                }
+                getPlayerFromQueueAndOffer(incomingQueueListener);
             }
         });
         // Behaviour to update available LobbyOrganizerAgents
@@ -55,15 +50,22 @@ public class AdderAgent extends Agent {
         addBehaviour(new TickerBehaviour(this, 3000) {
             @Override
             protected void onTick() {
-                String playerToAddString = waitingQueueListener.getMessage();
-                if (playerToAddString != null) {
-                    Player playerToAdd = JsonParser.entity(playerToAddString, Player.class);
-                    if (playerToAdd != null) {
-                        addBehaviour(new OfferPlayerBehaviour(playerToAdd, "WAITING_QUEUE"));
-                    }
-                }
+                getPlayerFromQueueAndOffer(waitingQueueListener);
             }
         });
+    }
+
+    private void getPlayerFromQueueAndOffer(AmqpListener queueListener) {
+        QueueMessage queueResponse = queueListener.getMessage();
+        if (queueResponse != null) {
+            String message = queueResponse.getMessage();
+            if (message != null) {
+                Player playerToAdd = JsonParser.entity(message, Player.class);
+                if (playerToAdd != null) {
+                    addBehaviour(new OfferPlayerBehaviour(playerToAdd, queueListener, queueResponse.getDeliveryTag()));
+                }
+            }
+        }
     }
 
     private class SetupPlayersBehaviour extends OneShotBehaviour {
@@ -89,11 +91,13 @@ public class AdderAgent extends Agent {
         private final Player player;
         private PlayerEntity playerWithTime;
         private long executionStart;
-        private String queueType;
+        private long deliveryTag;
+        private AmqpListener queueListener;
 
-        public OfferPlayerBehaviour(Player currentPlayer, String queueType) {
+        public OfferPlayerBehaviour(Player currentPlayer, AmqpListener queueListener, long deliveryTag) {
             this.player = currentPlayer;
-            this.queueType = queueType;
+            this.queueListener = queueListener;
+            this.deliveryTag = deliveryTag;
         }
 
         @Override
@@ -163,6 +167,7 @@ public class AdderAgent extends Agent {
                             // sets the player's final waiting time in the queue
                             _setPlayerFinalTime();
                             _savePlayerWithTime();
+                            _ackPlayerMessage();
                         }
                         actionStep++;
                     } else {
@@ -189,6 +194,10 @@ public class AdderAgent extends Agent {
 
         private void _savePlayerWithTime() {
             _playerRepository.save(playerWithTime);
+        }
+
+        private void _ackPlayerMessage() {
+            queueListener.ackMessage(deliveryTag);
         }
     }
 }
