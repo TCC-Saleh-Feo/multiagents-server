@@ -50,7 +50,7 @@ public class LobbyOrganizerAgent extends Agent {
         normalizedCriteriaValues.add(newPlayerNormalizedCriteria);
         Double standardDeviationWithNewPlayer = Calculator.getStandardDeviation(normalizedCriteriaValues);
 
-        return Math.abs(standardDeviationWithNewPlayer - standardDeviationWithoutNewPlayer);
+        return standardDeviationWithNewPlayer - standardDeviationWithoutNewPlayer;
     }
 
     Double getPlayerNormalizedCriteria(Player player, Criteria criteria) {
@@ -116,7 +116,6 @@ public class LobbyOrganizerAgent extends Agent {
                 for (Criteria criteria : queueConfig.criteria) {
                     Double criteriaValue = getLobbyScoreForCriteria(criteria, offeredPlayer);
                     criteriaScores.add(criteriaValue);
-                    _setCriteriaOnLobbyEntity(criteria.name, criteriaValue);
                 }
 
                 System.out.println("Calculated scores: " + criteriaScores);
@@ -163,6 +162,13 @@ public class LobbyOrganizerAgent extends Agent {
                     reply.setContent("OK");
 
                     myAgent.send(reply);
+
+                    for (Criteria criteria : queueConfig.criteria) {
+                        ArrayList<Player> mergedLobby = getMergedLobby();
+                        ArrayList<Double> criteriaValuesNormalized = getCriteriaValuesNormalized(criteria, mergedLobby);
+                        Double standardDeviation = Calculator.getStandardDeviation(criteriaValuesNormalized);
+                        _setCriteriaOnLobbyEntity(criteria.name, standardDeviation);
+                    }
 
                     if (completedTeams >= queueConfig.teamAmount) {
                         for (List<Player> team : lobby.getLobby()) {
