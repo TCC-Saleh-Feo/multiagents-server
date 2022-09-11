@@ -62,6 +62,7 @@ public class AdderAgent extends Agent {
             if (message != null) {
                 Player playerToAdd = JsonParser.entity(message, Player.class);
                 if (playerToAdd != null) {
+                    System.out.println(getLocalName() + " offer player!");
                     addBehaviour(new OfferPlayerBehaviour(playerToAdd, queueListener, queueResponse.getDeliveryTag()));
                 }
             }

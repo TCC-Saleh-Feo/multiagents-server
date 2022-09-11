@@ -1,13 +1,12 @@
 package com.tccsafeo.agents;
 
-import com.tccsafeo.persistence.entities.AgentType;
 import com.tccsafeo.utils.ClassNameAgents;
 import com.tccsafeo.utils.Configuration;
 import com.tccsafeo.utils.WhitePage;
 import com.tccsafeo.utils.YellowPage;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.FIPAAgentManagement.AMSAgentDescription;
@@ -16,21 +15,19 @@ import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
 import jade.wrapper.StaleProxyException;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class HealthAgent extends Agent {
 
-    private static String[] agentsName = {"Adder", "Lobby1", "Lobby2", "Lobby3"};
+    private static String[] agentsName = {"Adder1", "Adder2", "Lobby1", "Lobby2", "Lobby3"};
+//    private Map<String, String> agentWithState = new HashMap<>();  // TODO: Save Agent State to economize resources
 
     protected void setup() {
         addBehaviour(new SetupHealthAgentBehaviour());
         addBehaviour(new CheckAgentsStateBehaviour(this, 2000));
-//        addBehaviour(new SleepUnemployedAgentBehaviour());
-//        addBehaviour(new WakeUpAgentBehaviour());
+//        addBehaviour(new SleepUnemployedAgentBehaviour(this, 2000));  // TODO: Sleep unemployed agents
+//        addBehaviour(new WakeUpAgentBehaviour());  // TODO: Wakeup Agents
     }
 
     private class SetupHealthAgentBehaviour extends OneShotBehaviour {
@@ -43,8 +40,8 @@ public class HealthAgent extends Agent {
     }
 
     private class CheckAgentsStateBehaviour extends TickerBehaviour {
-        public CheckAgentsStateBehaviour(Agent a, long period) {
-            super(a, period);
+        public CheckAgentsStateBehaviour(HealthAgent healthAgent, int period) {
+            super(healthAgent, period);
         }
 
         @Override
@@ -53,12 +50,20 @@ public class HealthAgent extends Agent {
                 List<AMSAgentDescription> foundAgents = WhitePage.listAgents(myAgent, agentsName);
                 List<String> foundAgentsName = foundAgents.stream().map(AMSAgentDescription::getName).map(AID::getLocalName)
                                 .collect(Collectors.toList());
+//                updateAgentsState(foundAgents);
                 checkLiveAgents(foundAgentsName);
             } catch (FIPAException e) {
                 block();
             }
         }
     }
+
+    // TODO: Use this method to update agent state
+//    private void updateAgentsState(List<AMSAgentDescription> agents) {
+//        for (AMSAgentDescription agent : agents) {
+//            agentWithState.put(agent.getName().getLocalName(), agent.getState());
+//        }
+//    }
 
     private void checkLiveAgents(List<String> foundAgentsName) {
         List<String> agentsNameList = new LinkedList<>(Arrays.asList(agentsName));
