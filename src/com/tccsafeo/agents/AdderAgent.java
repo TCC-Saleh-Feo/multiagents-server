@@ -12,6 +12,7 @@ import com.tccsafeo.utils.YellowPage;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
@@ -33,12 +34,13 @@ public class AdderAgent extends Agent {
     protected void setup() {
         addBehaviour(new SetupPlayersBehaviour());
         // Behaviour to send players to lobby agents from time to time
-        addBehaviour(new TickerBehaviour(this, 2000) {
-            @Override
-            protected void onTick() {
-                getPlayerFromQueueAndOffer(incomingQueueListener);
-            }
-        });
+//        addBehaviour(new TickerBehaviour(this, 100) {
+//            @Override
+//            protected void onTick() {
+//                getPlayerFromQueueAndOffer(incomingQueueListener);
+//            }
+//        });
+        addBehaviour(new GetPlayerAndOffer());
         // Behaviour to update available LobbyOrganizerAgents
         addBehaviour(new TickerBehaviour(this, 1000) {
             @Override
@@ -53,6 +55,13 @@ public class AdderAgent extends Agent {
                 getPlayerFromQueueAndOffer(waitingQueueListener);
             }
         });
+    }
+
+    private class GetPlayerAndOffer extends CyclicBehaviour {
+        @Override
+        public void action() {
+            getPlayerFromQueueAndOffer(incomingQueueListener);
+        }
     }
 
     private void getPlayerFromQueueAndOffer(AmqpListener queueListener) {

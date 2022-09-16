@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 public class HealthAgent extends Agent {
 
-    private static String[] agentsName = {"Adder1", "Adder2", "Lobby1", "Lobby2", "Lobby3"};
+    private static String[] agentsName = {"Adder1", "Adder2", "Adder3", "Lobby1", "Lobby2", "Lobby3"};
 //    private Map<String, String> agentWithState = new HashMap<>();  // TODO: Save Agent State to economize resources
 
     protected void setup() {

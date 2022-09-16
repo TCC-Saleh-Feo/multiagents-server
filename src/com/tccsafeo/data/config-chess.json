@@ -1,0 +1,11 @@
+{
+    "criteria": [
+        {
+            "name": "Standard_Rating",
+            "min": 1801,
+            "max": 2675
+        }
+    ],
+    "teamSize": 1,
+    "teamAmount": 2
+}

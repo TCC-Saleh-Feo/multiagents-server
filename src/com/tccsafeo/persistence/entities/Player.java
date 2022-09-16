@@ -5,6 +5,7 @@ import java.util.stream.IntStream;
 
 public class Player {
     public String playerId;
+    public String sendInstant;
     public ArrayList<PlayerData> playerData;
 
     public Player() {
@@ -27,6 +28,7 @@ public class Player {
     public String toString() {
         return "Player {" +
                 "playerId = " + playerId +
+                "sendInstant = " + sendInstant +
                 ", playerData = " + playerData +
                 "}";
     }

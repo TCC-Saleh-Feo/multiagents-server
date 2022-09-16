@@ -8,6 +8,8 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
 
+import java.util.UUID;
+
 public class MongoDBConfig
 {
     private static MongoClient _mongoClient() {
